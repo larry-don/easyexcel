@@ -181,7 +181,7 @@ public class StyleDataTest {
     }
 
     private void readAndWrite(File file) throws Exception {
-        SimpleColumnWidthStyleStrategy simpleColumnWidthStyleStrategy = new SimpleColumnWidthStyleStrategy(50);
+        SimpleColumnWidthStyleStrategy simpleColumnWidthStyleStrategy = new SimpleColumnWidthStyleStrategy(24);
         SimpleRowHeightStyleStrategy simpleRowHeightStyleStrategy =
             new SimpleRowHeightStyleStrategy((short)40, (short)50);
 
@@ -209,7 +209,7 @@ public class StyleDataTest {
 
         Workbook workbook = WorkbookFactory.create(file);
         Sheet sheet = workbook.getSheetAt(0);
-        Assertions.assertEquals(50 * 256, sheet.getColumnWidth(0), 0);
+        Assertions.assertEquals(24 * 256, sheet.getColumnWidth(0), 0);
 
         Row row0 = sheet.getRow(0);
         Assertions.assertEquals(800, row0.getHeight(), 0);

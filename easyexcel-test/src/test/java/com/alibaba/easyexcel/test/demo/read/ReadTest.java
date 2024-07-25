@@ -1,9 +1,11 @@
 package com.alibaba.easyexcel.test.demo.read;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.alibaba.easyexcel.test.local.listener.HeadsListener;
 import com.alibaba.easyexcel.test.util.TestFileUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelReader;
@@ -21,6 +23,7 @@ import com.alibaba.fastjson2.JSON;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.Assert;
 
 /**
  * 读的常见写法
@@ -30,6 +33,35 @@ import org.junit.jupiter.api.Test;
 
 @Slf4j
 public class ReadTest {
+
+
+    @Test
+    public void test(){
+        String fileName = TestFileUtil.getPath() + "demo" + File.separator + "demo.xlsx";
+        // 这里 需要指定读用哪个class去读，然后读取第一个sheet 文件流会自动关闭
+        // 这里默认每次会读取100条数据 然后返回过来 直接调用使用数据就行
+        // 具体需要返回多少行可以在`PageReadListener`的构造函数设置
+        EasyExcel.read(fileName, DemoData.class, new PageReadListener<DemoData>(dataList -> {
+            for (DemoData demoData : dataList) {
+                log.info("读取到一条数据{}", JSON.toJSONString(demoData));
+            }
+        })).sheet().doRead();
+    }
+
+
+    @Test
+    public void test1(){
+        String fileName = TestFileUtil.getPath() + "simpleWrite" + "1700706994936" + ".xlsx";
+        // 这里 需要指定读用哪个class去读，然后读取第一个sheet 文件流会自动关闭
+        // 这里默认每次会读取100条数据 然后返回过来 直接调用使用数据就行
+        // 具体需要返回多少行可以在`PageReadListener`的构造函数设置
+        EasyExcel.read(fileName, DemoData.class, new PageReadListener<DemoData>(dataList -> {
+            for (DemoData demoData : dataList) {
+                log.info("读取到一条数据{}", JSON.toJSONString(demoData));
+            }
+        })).sheet().doRead();
+    }
+
 
     /**
      * 最简单的读
@@ -307,6 +339,31 @@ public class ReadTest {
     public void noModelRead() {
         String fileName = TestFileUtil.getPath() + "demo" + File.separator + "demo.xlsx";
         // 这里 只要，然后读取第一个sheet 同步读取会自动finish
-        EasyExcel.read(fileName, new NoModelDataListener()).sheet().doRead();
+        EasyExcel.read(fileName, new NoModelDataListener()).sheet().headRowNumber(2).doRead();
     }
+
+
+    /**
+
+     * @return: void
+     * @Description: 无对象多行头读取
+     * @Author: larry
+     * @Date: 2023/8/1 10:10
+     **/
+    @Test
+    public void noModelMultiHeadsRead(){
+        String fileName = TestFileUtil.getPath() + "demo" + File.separator + "demo.xlsx";
+        List<Integer> counts = new ArrayList<>();
+
+        ExcelReader excelReader = EasyExcel.read(fileName, new HeadsListener(counts)).build();
+        List<ReadSheet> readSheets = excelReader.excelExecutor().sheetList();
+        for (ReadSheet readSheet : readSheets) {
+            readSheet.setAutoTrim(false);
+            readSheet.setHeadRowNumber(0);
+            excelReader.read(readSheet);
+        }
+        System.out.println(counts);
+
+    }
+
 }

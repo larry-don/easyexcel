@@ -3,14 +3,15 @@ package com.alibaba.easyexcel.test.demo.write;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import com.alibaba.easyexcel.test.core.head.ComplexHeadData;
+import com.alibaba.easyexcel.test.local.model.ComplexRowHeightStyle;
+import com.alibaba.easyexcel.test.local.style.ComplexColumnWidthStyleStrategy;
+import com.alibaba.easyexcel.test.local.style.ComplexRowHeightStyleStrategy;
+import com.alibaba.easyexcel.test.local.style.HiddenColumnWriteStrategy;
+import com.alibaba.easyexcel.test.local.style.HiddenSheetWriteHandler;
 import com.alibaba.easyexcel.test.util.TestFileUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -160,6 +161,7 @@ public class WriteTest {
         EasyExcel.write(fileName, ComplexHeadData.class).sheet("模板").doWrite(data());
     }
 
+
     /**
      * 重复多次写入
      * <p>
@@ -184,6 +186,7 @@ public class WriteTest {
                 excelWriter.write(data, writeSheet);
             }
         }
+
 
         // 方法2: 如果写到不同的sheet 同一个对象
         fileName = TestFileUtil.getPath() + "repeatedWrite" + System.currentTimeMillis() + ".xlsx";
@@ -214,6 +217,64 @@ public class WriteTest {
             }
         }
 
+    }
+
+
+    /**
+     * @return: void
+     * @Description: 测试动态对象 动态头
+     * @Author: larry
+     * @Date: 2023/7/24 10:19
+     **/
+    @Test
+    public void testDynamicHead() {
+        String fileName = TestFileUtil.getPath() + "_动态测试0731_" + System.currentTimeMillis() + ".xlsx";
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
+            for (int i = 0; i < 2; i++) {
+                WriteSheet writeSheet = EasyExcel.writerSheet(i, "模板" + i).automaticMergeHead(false).build();
+                if (i==0){
+                    writeSheet.setHead(head());
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenColumnWriteStrategy(2)));
+                    excelWriter.write(dataList(),writeSheet);
+                }
+                if (i==1){
+                    writeSheet.setHead(head1());
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenSheetWriteHandler()));
+                    excelWriter.write(dataList1(),writeSheet);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testExportOnlySingleCell() {
+        String fileName = TestFileUtil.getPath() + "_动态测试0810_" + System.currentTimeMillis() + ".xlsx";
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
+            for (int i = 0; i < 3; i++) {
+                WriteSheet writeSheet = EasyExcel.writerSheet(i, "模板" + i).build();
+                if (i==0){
+                    writeSheet.setHead(head());
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenColumnWriteStrategy(2)));
+                    excelWriter.write(dataList(),writeSheet);
+                }
+                if (i==1){
+                    writeSheet.setHead(head1());
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenSheetWriteHandler()));
+                    excelWriter.write(dataList1(),writeSheet);
+                }
+                if (i==2){
+                    writeSheet.setHead(head2());
+                    ComplexColumnWidthStyleStrategy complexColumnWidthStyleStrategy = new ComplexColumnWidthStyleStrategy();
+                    ComplexRowHeightStyleStrategy complexRowHeightStyleStrategy = new ComplexRowHeightStyleStrategy();
+                    ArrayBlockingQueue<ComplexRowHeightStyle > arrayBlockingQueue = new ArrayBlockingQueue<>(1);
+                    ComplexRowHeightStyle complexRowHeightStyle = new ComplexRowHeightStyle((short)200, (short)0, (short)0);
+                    arrayBlockingQueue.add(complexRowHeightStyle);
+                    complexRowHeightStyleStrategy.setComplexRowHeightStyles(arrayBlockingQueue);
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(complexRowHeightStyleStrategy,complexColumnWidthStyleStrategy));
+                    excelWriter.write(new ArrayList<>(),writeSheet);
+                }
+            }
+        }
     }
 
     /**
@@ -460,7 +521,7 @@ public class WriteTest {
         // 背景设置为红色
         headWriteCellStyle.setFillForegroundColor(IndexedColors.RED.getIndex());
         WriteFont headWriteFont = new WriteFont();
-        headWriteFont.setFontHeightInPoints((short)20);
+        headWriteFont.setFontHeightInPoints((short) 20);
         headWriteCellStyle.setWriteFont(headWriteFont);
         // 内容的策略
         WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
@@ -470,7 +531,7 @@ public class WriteTest {
         contentWriteCellStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
         WriteFont contentWriteFont = new WriteFont();
         // 字体大小
-        contentWriteFont.setFontHeightInPoints((short)20);
+        contentWriteFont.setFontHeightInPoints((short) 20);
         contentWriteCellStyle.setWriteFont(contentWriteFont);
         // 这个策略是 头是头的样式 内容是内容的样式 其他的策略可以自己实现
         HorizontalCellStyleStrategy horizontalCellStyleStrategy =
@@ -734,11 +795,14 @@ public class WriteTest {
     private List<List<String>> head() {
         List<List<String>> list = ListUtils.newArrayList();
         List<String> head0 = ListUtils.newArrayList();
-        head0.add("字符串" + System.currentTimeMillis());
+        head0.add("字符串test");
+        head0.add("cuikai");
         List<String> head1 = ListUtils.newArrayList();
-        head1.add("数字" + System.currentTimeMillis());
+        head1.add("数字test" + System.currentTimeMillis());
+        head1.add("cuikai");
         List<String> head2 = ListUtils.newArrayList();
-        head2.add("日期" + System.currentTimeMillis());
+        head2.add("日期test" + System.currentTimeMillis());
+        head2.add("cuikai");
         list.add(head0);
         list.add(head1);
         list.add(head2);
@@ -757,11 +821,50 @@ public class WriteTest {
         return list;
     }
 
+    private List<List<Object>> dataList1() {
+        List<List<Object>> list = ListUtils.newArrayList();
+        for (int i = 0; i < 10; i++) {
+            List<Object> data = ListUtils.newArrayList();
+            data.add("姓名" + i);
+            data.add(new Random(100).nextDouble());
+            data.add(new Date());
+            list.add(data);
+        }
+        return list;
+    }
+
+    private List<List<String>> head1() {
+        List<List<String>> list = ListUtils.newArrayList();
+        List<String> head0 = ListUtils.newArrayList();
+        head0.add("姓名test" + System.currentTimeMillis());
+        head0.add("ck测试姓名");
+        List<String> head1 = ListUtils.newArrayList();
+        head1.add("年龄test" + System.currentTimeMillis());
+        head1.add("ck测试年龄");
+        List<String> head2 = ListUtils.newArrayList();
+        head2.add("出生日期test" + System.currentTimeMillis());
+        head2.add("ck出生日期");
+        list.add(head0);
+        list.add(head1);
+        list.add(head2);
+        return list;
+    }
+
+    private List<List<String>> head2() {
+        List<List<String>> list = ListUtils.newArrayList();
+        List<String> head0 = ListUtils.newArrayList();
+        head0.add("1. 请勿修改表格中的字段顺序，不得增加、删除表格字段；所有填写内容必须为文本格式；红字带*字段为必填字段，黄色背景字段为引用系统内参照字段（请到系统查找）；\n" +
+            "2. 建议日期字段输入最佳标准格式：YYYY-MM-DD，如2021-06-06；\n" +
+            "3.【过滤标识】字段列：若【过滤标识】为 “X”，则导入时会过滤掉该行数据，无“X”（为空）时，则可以导入。");
+        list.add(head0);
+        return list;
+    }
+
     private List<DemoData> data() {
         List<DemoData> list = ListUtils.newArrayList();
         for (int i = 0; i < 10; i++) {
             DemoData data = new DemoData();
-            data.setString("字符串" + i);
+            data.setString("字符串" + i+"   ");
             data.setDate(new Date());
             data.setDoubleData(0.56);
             list.add(data);
