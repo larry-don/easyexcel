@@ -192,7 +192,7 @@ public class DynamicWriteTest {
                 ComplexCellStyle style = new ComplexCellStyle(2, column.getIndex(), IndexedColors.YELLOW.getIndex());
                 style.setFontHeightInPoints((short) 12);
                 style.setBold(true);
-                style.setColor(IndexedColors.RED.getIndex());
+                style.setFontColor(IndexedColors.RED.getIndex());
                 style.setFontName("微软雅黑");
                 style.setWrapped(true);
                 cellStyles.add(style);

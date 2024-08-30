@@ -1,17 +1,9 @@
 package com.alibaba.easyexcel.test.demo.write;
 
-import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-
 import com.alibaba.easyexcel.test.core.head.ComplexHeadData;
+import com.alibaba.easyexcel.test.local.model.ComplexCellStyle;
 import com.alibaba.easyexcel.test.local.model.ComplexRowHeightStyle;
-import com.alibaba.easyexcel.test.local.style.ComplexColumnWidthStyleStrategy;
-import com.alibaba.easyexcel.test.local.style.ComplexRowHeightStyleStrategy;
-import com.alibaba.easyexcel.test.local.style.HiddenColumnWriteStrategy;
-import com.alibaba.easyexcel.test.local.style.HiddenSheetWriteHandler;
+import com.alibaba.easyexcel.test.local.style.*;
 import com.alibaba.easyexcel.test.util.TestFileUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -21,15 +13,12 @@ import com.alibaba.excel.annotation.format.NumberFormat;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.ContentRowHeight;
 import com.alibaba.excel.annotation.write.style.HeadRowHeight;
+import com.alibaba.excel.converters.bigdecimal.BigDecimalStringConverter;
+import com.alibaba.excel.converters.date.DateStringConverter;
 import com.alibaba.excel.enums.CellDataTypeEnum;
-import com.alibaba.excel.metadata.data.CommentData;
-import com.alibaba.excel.metadata.data.FormulaData;
-import com.alibaba.excel.metadata.data.HyperlinkData;
+import com.alibaba.excel.metadata.data.*;
 import com.alibaba.excel.metadata.data.HyperlinkData.HyperlinkType;
-import com.alibaba.excel.metadata.data.ImageData;
 import com.alibaba.excel.metadata.data.ImageData.ImageType;
-import com.alibaba.excel.metadata.data.RichTextStringData;
-import com.alibaba.excel.metadata.data.WriteCellData;
 import com.alibaba.excel.util.BooleanUtils;
 import com.alibaba.excel.util.FileUtils;
 import com.alibaba.excel.util.ListUtils;
@@ -42,14 +31,18 @@ import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
-
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Workbook;
+import com.alibaba.excel.write.style.column.SimpleColumnWidthStyleStrategy;
+import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * 写的常见写法
@@ -231,19 +224,52 @@ public class WriteTest {
         String fileName = TestFileUtil.getPath() + "_动态测试0731_" + System.currentTimeMillis() + ".xlsx";
         try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
             for (int i = 0; i < 2; i++) {
-                WriteSheet writeSheet = EasyExcel.writerSheet(i, "模板" + i).automaticMergeHead(false).build();
-                if (i==0){
+                WriteSheet writeSheet = EasyExcel.writerSheet(i, "模板" + i).automaticMergeHead(false).registerConverter(new DateStringConverter()).registerConverter(new BigDecimalStringConverter()).build();
+                if (i == 0) {
                     writeSheet.setHead(head());
-                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenColumnWriteStrategy(2)));
-                    excelWriter.write(dataList(),writeSheet);
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new CellStyleWriteHandle()));
+                    excelWriter.write(dataList(), writeSheet);
                 }
-                if (i==1){
+                if (i == 1) {
                     writeSheet.setHead(head1());
-                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenSheetWriteHandler()));
-                    excelWriter.write(dataList1(),writeSheet);
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new CellStyleWriteHandle()));
+                    excelWriter.write(dataList1(), writeSheet);
                 }
             }
         }
+    }
+
+    @Test
+    public void testContentStyle() {
+        String fileName = TestFileUtil.getPath() + "content测试" + System.currentTimeMillis() + ".xlsx";
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
+            WriteCellStyle contentStyle = new WriteCellStyle();
+            contentStyle.setWrapped(true);
+            contentStyle.setHorizontalAlignment(HorizontalAlignment.LEFT);
+            WriteFont contentFont = new WriteFont();
+            contentFont.setFontName("SimSun");
+            contentFont.setFontHeightInPoints((short) 10);
+            contentFont.setBold(false);
+            contentFont.setColor(IndexedColors.BLACK.getIndex());
+            contentStyle.setWriteFont(contentFont);
+            //CompositeWriteHandler compositeWriteHandler = new CompositeWriteHandler(Arrays.asList(new DefaultCellStyleWriteHandler(contentStyle), new ContentCellStyleStrategy()));
+            WriteSheet writeSheet = EasyExcel.writerSheet("样式测试").registerWriteHandler(new DefaultCellStyleWriteHandler(contentStyle)).registerWriteHandler(new ContentCellStyleStrategy()).build();
+            excelWriter.write(dataList1(), writeSheet);
+        }
+    }
+
+    public HorizontalCellStyleStrategy buildDefaultStyle() {
+
+        WriteCellStyle contentStyle = new WriteCellStyle();
+        contentStyle.setWrapped(true);
+        contentStyle.setHorizontalAlignment(HorizontalAlignment.LEFT);
+        WriteFont contentFont = new WriteFont();
+        contentFont.setFontName("SimSun");
+        contentFont.setFontHeightInPoints((short) 10);
+        contentFont.setBold(false);
+        contentFont.setColor(IndexedColors.BLACK.getIndex());
+        contentStyle.setWriteFont(contentFont);
+        return new HorizontalCellStyleStrategy(null, contentStyle);
     }
 
     @Test
@@ -252,29 +278,139 @@ public class WriteTest {
         try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
             for (int i = 0; i < 3; i++) {
                 WriteSheet writeSheet = EasyExcel.writerSheet(i, "模板" + i).build();
-                if (i==0){
+                if (i == 0) {
                     writeSheet.setHead(head());
                     writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenColumnWriteStrategy(2)));
-                    excelWriter.write(dataList(),writeSheet);
+                    excelWriter.write(dataList(), writeSheet);
                 }
-                if (i==1){
+                if (i == 1) {
                     writeSheet.setHead(head1());
                     writeSheet.setCustomWriteHandlerList(Arrays.asList(new HiddenSheetWriteHandler()));
-                    excelWriter.write(dataList1(),writeSheet);
+                    excelWriter.write(dataList1(), writeSheet);
                 }
-                if (i==2){
+                if (i == 2) {
                     writeSheet.setHead(head2());
                     ComplexColumnWidthStyleStrategy complexColumnWidthStyleStrategy = new ComplexColumnWidthStyleStrategy();
                     ComplexRowHeightStyleStrategy complexRowHeightStyleStrategy = new ComplexRowHeightStyleStrategy();
-                    ArrayBlockingQueue<ComplexRowHeightStyle > arrayBlockingQueue = new ArrayBlockingQueue<>(1);
-                    ComplexRowHeightStyle complexRowHeightStyle = new ComplexRowHeightStyle((short)200, (short)0, (short)0);
+                    ArrayBlockingQueue<ComplexRowHeightStyle> arrayBlockingQueue = new ArrayBlockingQueue<>(1);
+                    ComplexRowHeightStyle complexRowHeightStyle = new ComplexRowHeightStyle((short) 200, (short) 0, (short) 0);
                     arrayBlockingQueue.add(complexRowHeightStyle);
                     complexRowHeightStyleStrategy.setComplexRowHeightStyles(arrayBlockingQueue);
-                    writeSheet.setCustomWriteHandlerList(Arrays.asList(complexRowHeightStyleStrategy,complexColumnWidthStyleStrategy));
-                    excelWriter.write(new ArrayList<>(),writeSheet);
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(complexRowHeightStyleStrategy, complexColumnWidthStyleStrategy));
+                    excelWriter.write(new ArrayList<>(), writeSheet);
                 }
             }
         }
+    }
+
+    /**
+     * @return: void
+     * @Description: 1:1复现实际生产
+     * @Author: larry
+     * @Date: 2024/8/29 11:02
+     **/
+    @Test
+    public void testActualWrite() {
+        //String fileName = TestFileUtil.getPath() + "_导入模板_" + System.currentTimeMillis() + ".xlsx";
+        String fileName = "C:/Users/larry/Desktop/模版测试/" + "_导入模板_" + System.currentTimeMillis() + ".xlsx";
+        try (ExcelWriter excelWriter = EasyExcel.write(fileName).build()) {
+            WriteSheet writeSheet = EasyExcel.writerSheet("模板Only数据").build();
+
+            //默认行高：表头17 内容15
+            SimpleRowHeightStyleStrategy simpleRowHeightStyleStrategy = new SimpleRowHeightStyleStrategy((short) 17, (short) 15);
+            ArrayBlockingQueue<ComplexRowHeightStyle> complexRowHeightStyles = buildRowHeightStyle();
+            ComplexRowHeightStyleStrategy complexRowHeightStyleStrategy = new ComplexRowHeightStyleStrategy();
+            complexRowHeightStyleStrategy.setComplexRowHeightStyles(complexRowHeightStyles);
+
+            //列宽 25
+            SimpleColumnWidthStyleStrategy simpleColumnWidthStyleStrategy = new SimpleColumnWidthStyleStrategy(25);
+            //单元格格式(字体、颜色)控制策略
+            DefaultCellStyleStrategy defaultCellStyleStrategy = setDefaultCellStyle();
+            ArrayBlockingQueue<ComplexCellStyle> cellStyles = buildCellStyle();
+            ComplexCellStyleStrategy cellStyleStrategy = new ComplexCellStyleStrategy();
+            cellStyleStrategy.setCellStyles(cellStyles);
+
+            //单元格默认纯文本
+            CellFormatStrategy cellFormatStrategy = new CellFormatStrategy();
+
+            writeSheet.setCustomWriteHandlerList(Arrays.asList(simpleRowHeightStyleStrategy, complexRowHeightStyleStrategy, simpleColumnWidthStyleStrategy, defaultCellStyleStrategy, cellStyleStrategy, cellFormatStrategy));
+            excelWriter.write(dataList(), writeSheet);
+        }
+    }
+
+    private ArrayBlockingQueue<ComplexCellStyle> buildCellStyle() {
+        ArrayBlockingQueue<ComplexCellStyle> cellStyles = new ArrayBlockingQueue<>(3);
+        ComplexCellStyle style = new ComplexCellStyle();
+        style.setRowIndex(1);
+        style.setColumnIndex(0);
+        style.setFontColor(IndexedColors.RED.getIndex());
+        style.setBold(true);
+        cellStyles.add(style);
+
+        ComplexCellStyle style1 = new ComplexCellStyle();
+        style1.setRowIndex(1);
+        style1.setColumnIndex(1);
+        style1.setBold(true);
+        style1.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        style1.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
+
+        cellStyles.add(style1);
+        return cellStyles;
+    }
+
+    private DefaultCellStyleStrategy setDefaultCellStyle() {
+        //默认样式
+        DefaultCellStyleStrategy defaultCellStyleStrategy = new DefaultCellStyleStrategy();
+        WriteCellStyle headStyle = new WriteCellStyle();
+        WriteCellStyle contentStyle = new WriteCellStyle();
+
+        //表头默认样式
+        headStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headStyle.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
+        headStyle.setBorderTop(BorderStyle.THIN);
+        headStyle.setBorderBottom(BorderStyle.THIN);
+        headStyle.setBorderLeft(BorderStyle.THIN);
+        headStyle.setBorderRight(BorderStyle.THIN);
+        headStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+        headStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+        headStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+        headStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+        headStyle.setWrapped(true);
+        headStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        WriteFont headFont = new WriteFont();
+        headFont.setFontName("SimSun");
+        headFont.setFontHeightInPoints((short) 12);
+        headFont.setColor(IndexedColors.BLACK.getIndex());
+        headFont.setBold(false);
+        headStyle.setWriteFont(headFont);
+
+        //内容默认样式
+        contentStyle.setWrapped(true);
+        contentStyle.setHorizontalAlignment(HorizontalAlignment.LEFT);
+        WriteFont contentFont = new WriteFont();
+        contentFont.setFontName("SimSun");
+        contentFont.setFontHeightInPoints((short) 10);
+        contentFont.setBold(false);
+        contentFont.setColor(IndexedColors.BLACK.getIndex());
+        contentStyle.setWriteFont(contentFont);
+        defaultCellStyleStrategy.setContentWriteCellStyleList(Arrays.asList(headStyle, contentStyle));
+
+        return defaultCellStyleStrategy;
+    }
+
+    private ArrayBlockingQueue<ComplexRowHeightStyle> buildRowHeightStyle() {
+        int size = 2;
+        ArrayBlockingQueue<ComplexRowHeightStyle> result = new ArrayBlockingQueue<>(size);
+        for (int i = 0; i < size; i++) {
+            ComplexRowHeightStyle complexRowHeightStyle;
+            if (i == 0) {
+                complexRowHeightStyle = new ComplexRowHeightStyle((short) 0, (short) 0, i);
+            } else {
+                complexRowHeightStyle = new ComplexRowHeightStyle((short) 0, (short) 17, i);
+            }
+            result.add(complexRowHeightStyle);
+        }
+        return result;
     }
 
     /**
@@ -812,9 +948,24 @@ public class WriteTest {
     private List<List<Object>> dataList() {
         List<List<Object>> list = ListUtils.newArrayList();
         for (int i = 0; i < 10; i++) {
+            if (i == 0) {
+                List<Object> data0 = ListUtils.newArrayList();
+                data0.add("project");
+                data0.add("price");
+                data0.add("date");
+                list.add(data0);
+                List<Object> data1 = ListUtils.newArrayList();
+                data1.add("项目");
+                data1.add("金额");
+                data1.add("日期");
+                list.add(data1);
+                continue;
+            }
             List<Object> data = ListUtils.newArrayList();
             data.add("字符串" + i);
-            data.add(0.56);
+            BigDecimal bigDecimal = new BigDecimal(1245120.0212157487);
+            BigDecimal bigDecimal1 = bigDecimal.setScale(8, BigDecimal.ROUND_HALF_UP);
+            data.add(bigDecimal1);
             data.add(new Date());
             list.add(data);
         }
@@ -864,7 +1015,7 @@ public class WriteTest {
         List<DemoData> list = ListUtils.newArrayList();
         for (int i = 0; i < 10; i++) {
             DemoData data = new DemoData();
-            data.setString("字符串" + i+"   ");
+            data.setString("字符串" + i + "   ");
             data.setDate(new Date());
             data.setDoubleData(0.56);
             list.add(data);

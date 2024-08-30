@@ -1,6 +1,7 @@
 package com.alibaba.easyexcel.test.local.model;
 
 import lombok.Data;
+import org.apache.poi.ss.usermodel.FillPatternType;
 
 /**
  * @Description: 本类用于
@@ -13,7 +14,7 @@ public class ComplexCellStyle {
     private Integer columnIndex;
 
     /*背景颜色*/
-    private Short backgroundColor;
+    private Short fillForegroundColor;
 
     /*字体名称*/
     private String fontName;
@@ -28,16 +29,18 @@ public class ComplexCellStyle {
     private Short fontHeightInPoints;
 
     /*字体颜色*/
-    private Short color;
+    private Short fontColor;
+
+    private FillPatternType fillPatternType;
 
 
 
     public ComplexCellStyle() {
     }
 
-    public ComplexCellStyle(Integer rowIndex, Integer columnIndex, Short backgroundColor) {
+    public ComplexCellStyle(Integer rowIndex, Integer columnIndex, Short fillForegroundColor) {
         this.rowIndex = rowIndex;
         this.columnIndex = columnIndex;
-        this.backgroundColor = backgroundColor;
+        this.fillForegroundColor = fillForegroundColor;
     }
 }
