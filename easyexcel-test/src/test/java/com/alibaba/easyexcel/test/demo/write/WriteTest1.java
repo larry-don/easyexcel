@@ -56,7 +56,7 @@ public class WriteTest1 {
                     .build();
                 if (i == 0) {
                     writeSheet.setHead(head());
-                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new SheetDataFormatStrategy(),new CellStyleWriteHandle()));
+                    writeSheet.setCustomWriteHandlerList(Arrays.asList(new SheetDataFormatStrategy(3),new CellStyleWriteHandle()));
                     excelWriter.write(dataList(), writeSheet);
                 }
                 if (i == 1) {

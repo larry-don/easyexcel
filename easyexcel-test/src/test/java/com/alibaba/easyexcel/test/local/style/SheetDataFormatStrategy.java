@@ -3,6 +3,7 @@ package com.alibaba.easyexcel.test.local.style;
 import com.alibaba.excel.write.handler.SheetWriteHandler;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteWorkbookHolder;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -15,8 +16,11 @@ import java.util.stream.IntStream;
  * @Author larry
  * @Date 2024/11/4 17:27
  */
+
+@RequiredArgsConstructor
 public class SheetDataFormatStrategy implements SheetWriteHandler {
     private CellStyle cellStyle;
+    private final Integer colNums;
 
     @Override
     public void beforeSheetCreate(WriteWorkbookHolder writeWorkbookHolder, WriteSheetHolder writeSheetHolder) {
@@ -32,6 +36,6 @@ public class SheetDataFormatStrategy implements SheetWriteHandler {
             DataFormat dataFormat = workbook.createDataFormat();
             cellStyle.setDataFormat(dataFormat.getFormat("@"));
         }
-        IntStream.range(0, 3).forEach(i -> sheet.setDefaultColumnStyle(i, cellStyle));
+        IntStream.range(0, colNums).forEach(i -> sheet.setDefaultColumnStyle(i, cellStyle));
     }
 }
